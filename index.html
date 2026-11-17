@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جدول تغذية الحيوانات الأليفة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef6f3;--card:#fff;--ink:#12303a;--muted:#5b7580;--line:#cfe2dc;--accent:#0f6b63;--accent-ink:#fff;--sun:#f2b632;--done:#dff3e8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1c21;--card:#16282f;--ink:#e6f1ee;--muted:#9bb3ba;--line:#27414a;--accent:#4fc3b4;--accent-ink:#07211f;--sun:#f2b632;--done:#1b3a33;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1c21;--card:#16282f;--ink:#e6f1ee;--muted:#9bb3ba;--line:#27414a;--accent:#4fc3b4;--accent-ink:#07211f;--done:#1b3a33;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Cairo",Tahoma,"Segoe UI",sans-serif;line-height:1.7}
+main{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.7rem;font-weight:800;margin:8px 0 4px}
+.sub{color:var(--muted);margin:0 0 18px}
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-bottom:18px}
+.pick{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 6px;font:inherit;font-weight:600;cursor:pointer;text-align:center}
+.pick span{display:block;font-size:1.8rem;line-height:1.3}
+.pick[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.pick:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+label{display:flex;flex-direction:column;font-weight:600;font-size:.9rem;gap:4px;flex:1;min-width:140px}
+input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+h2{font-size:1.15rem;margin:0 0 10px}
+.meal{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--line);margin-bottom:8px;cursor:pointer;background:var(--card);width:100%;font:inherit;color:inherit;text-align:start}
+.meal[aria-pressed="true"]{background:var(--done);border-color:var(--accent)}
+.meal .t{font-size:1.4rem;font-weight:800;min-width:88px;direction:ltr;text-align:center}
+.meal .a{flex:1;color:var(--muted);font-size:.92rem}
+.meal .c{font-size:1.4rem}
+.bar{height:10px;background:var(--line);border-radius:8px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+ul{margin:0;padding-inline-start:20px}
+.warn{border-inline-start:5px solid var(--sun)}
+small{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>🐾 جدول تغذية حيوانك الأليف</h1>
+<p class="sub">اختر الحيوان من القائمة، وسيظهر لك جدول الوجبات والكمية المناسبة لاحتياجه.</p>
+
+<div class="picker" id="picker" role="group" aria-label="اختر الحيوان"></div>
+
+<div id="out"></div>
+<p><small>هذه إرشادات عامة، وتختلف الاحتياجات حسب العمر والصحة والنشاط. استشر الطبيب البيطري عند أي شك.</small></p>
+</main>
+
+<script>
+const A=[
+{id:'dog',n:'كلب بالغ',e:'🐕',meals:2,gap:12,start:'07:00',kg:[20,30],food:'علف جاف مخصص للكلاب مع قليل من الأرز أو الدجاج المسلوق.',avoid:'الشوكولاتة، العنب والزبيب، البصل والثوم، العظام المطبوخة.',water:'ماء نظيف متاح طوال اليوم.'},
+{id:'pup',n:'جرو',e:'🐶',meals:4,gap:4,start:'07:00',kg:[40,60],food:'علف مخصص للجراء، ويمكن نقعه بالماء للأسبوع الأول من الفطام.',avoid:'الحليب البقري، الشوكولاتة، العظام الصغيرة.',water:'ماء نظيف متاح دائمًا.'},
+{id:'cat',n:'قط بالغ',e:'🐈',meals:2,gap:12,start:'07:00',kg:[12,16],food:'علف جاف أو طعام رطب مخصص للقطط (غني بالبروتين).',avoid:'البصل والثوم، الشوكولاتة، التونة الدائمة، الحليب البقري.',water:'ماء طازج يوميًا، وبعض القطط تفضل نافورة ماء.'},
+{id:'kit',n:'هريرة صغيرة',e:'🐱',meals:4,gap:4,start:'07:00',kg:[20,30],food:'علف أو طعام رطب مخصص للقطط الصغيرة.',avoid:'الحليب البقري، الأسماك النيئة، الطعام المخصص للكبار.',water:'ماء نظيف في وعاء ضحل.'},
+{id:'rab',n:'أرنب',e:'🐇',meals:2,gap:12,start:'08:00',kg:[25,25],unit:'حبيبات',food:'دريس (حشيش جاف) غير محدود، مع خضار ورقية طازجة وحبيبات مخصصة.',avoid:'الخس الأبيض، الجزر بكثرة، الشوكولاتة، البصل.',water:'ماء نظيف متاح دائمًا.'},
+{id:'gp',n:'خنزير غينيا',e:'🐹',meals:2,gap:12,start:'08:00',fixed:'ملعقة كبيرة حبيبات + كوب خضار طازج يوميًا',food:'دريس غير محدود، خضار غنية بفيتامين C مثل الفلفل الملون والبقدونس.',avoid:'البصل، الثوم، الشوكولاتة، الأطعمة السكرية.',water:'ماء نظيف، وفيتامين C ضروري يوميًا.'},
+{id:'ham',n:'هامستر',e:'🐭',meals:1,gap:0,start:'19:00',fixed:'ملعقة كبيرة صغيرة من خليط البذور والحبوب',food:'خليط مخصص للهامستر مع قطعة خضار أو فاكهة صغيرة مرتين أسبوعيًا.',avoid:'الحمضيات، البصل، اللوز المر، الأطعمة السكرية.',water:'ماء نظيف في زجاجة معلقة. يتغذى ليلًا، فالمساء أنسب وقت.'},
+{id:'par',n:'ببغاء',e:'🦜',meals:2,gap:10,start:'07:00',fixed:'ملعقتان كبيرتان من الحبوب/الحبيبات + خضار وفاكهة طازجة',food:'حبيبات مخصصة للببغاوات كأساس، والبذور بكميات محدودة.',avoid:'الأفوكادو، الشوكولاتة، الكافيين، الملح.',water:'ماء طازج يوميًا.'},
+{id:'fish',n:'سمكة زينة',e:'🐠',meals:2,gap:10,start:'08:00',fixed:'كمية تأكلها السمكة خلال دقيقتين فقط',food:'رقائق أو حبيبات مخصصة لنوع السمكة.',avoid:'الإفراط في الإطعام (يلوّث الماء)، طعام البشر.',water:'غيّر 25% من ماء الحوض أسبوعيًا.'},
+{id:'tur',n:'سلحفاة مائية',e:'🐢',meals:1,gap:0,start:'10:00',fixed:'كمية بحجم رأس السلحفاة تقريبًا',food:'حبيبات سلاحف، مع خضار ورقية وقطع بروتين صغيرة أسبوعيًا.',avoid:'اللحوم المعالجة، الخبز، الأطعمة المالحة.',water:'تتغذى داخل الماء، فغيّره بانتظام.'}
+];
+const done={};
+let cur=null;
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>{m=((m%1440)+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
+
+$('#picker').innerHTML=A.map(a=>`<button class="pick" data-id="${a.id}" aria-pressed="false"><span>${a.e}</span>${a.n}</button>`).join('');
+$('#picker').addEventListener('click',e=>{const b=e.target.closest('.pick');if(!b)return;select(b.dataset.id)});
+
+function select(id){
+  cur=A.find(a=>a.id===id);
+  document.querySelectorAll('.pick').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
+  render(true);
+}
+
+function render(reset){
+  const a=cur;
+  const old={start:($('#start')||{}).value,w:($('#w')||{}).value};
+  const start=reset?a.start:(old.start||a.start);
+  const w=reset?'':old.w;
+  $('#out').innerHTML=`
+  <div class="panel"><h2>${a.e} ${a.n}</h2>
+   <div class="row">
+    <label>وقت أول وجبة<input type="time" id="start" value="${start}"></label>
+    ${a.kg?`<label>الوزن بالكيلوغرام<input type="number" id="w" min="0.1" step="0.1" placeholder="مثال: 5" value="${w||''}"></label>`:''}
+   </div></div>
+  <div class="panel"><h2>وجبات اليوم</h2>
+   <div class="bar"><i id="prog"></i></div>
+   <div id="meals"></div></div>
+  <div class="panel"><h2>الغذاء المناسب</h2><p style="margin:0">${a.food}</p><p style="margin:8px 0 0">💧 ${a.water}</p></div>
+  <div class="panel warn"><h2>ممنوع أو يُحذَّر منه</h2><p style="margin:0">${a.avoid}</p></div>`;
+  $('#start').addEventListener('input',meals);
+  if($('#w'))$('#w').addEventListener('input',meals);
+  meals();
+}
+
+function meals(){
+  const a=cur,[h,m]=$('#start').value.split(':').map(Number);
+  const base=(h||0)*60+(m||0);
+  let amt=a.fixed||'';
+  if(a.kg){
+    const w=parseFloat(($('#w')||{}).value);
+    if(w>0){
+      const lo=Math.round(w*a.kg[0]/a.meals),hi=Math.round(w*a.kg[1]/a.meals);
+      amt=(lo===hi?`حوالي ${lo}`:`من ${lo} إلى ${hi}`)+` غرام ${a.unit||'علف جاف'} في كل وجبة`;
+    }else amt='أدخل الوزن لحساب الكمية';
+  }
+  done[a.id]=done[a.id]||{};
+  let html='';
+  for(let i=0;i<a.meals;i++){
+    const on=done[a.id][i];
+    html+=`<button class="meal" data-i="${i}" aria-pressed="${!!on}"><span class="t">${fmt(base+i*a.gap*60)}</span><span class="a">الوجبة ${i+1} من ${a.meals}<br>${amt}</span><span class="c">${on?'✅':'⬜'}</span></button>`;
+  }
+  $('#meals').innerHTML=html;
+  prog();
+}
+function prog(){
+  const a=cur,n=Object.values(done[a.id]).filter(Boolean).length;
+  $('#prog').style.width=(n/a.meals*100)+'%';
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.meal');if(!b||!cur)return;
+  const i=b.dataset.i;done[cur.id][i]=!done[cur.id][i];meals();
+});
+select('dog');
+</script>
+</body>
+</html>
